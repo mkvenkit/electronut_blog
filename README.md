@@ -1,2 +1,3 @@
-# electronut_blog
-Projects from electronut.in blog articles.
+# Code from Electronut Blog
+
+Code and files relevant to projects from the electronut.in blog.
