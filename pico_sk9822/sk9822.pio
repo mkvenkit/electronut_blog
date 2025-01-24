@@ -1,0 +1,49 @@
+; 
+; sk9822.pio 
+;
+; Drive SK9822 LEDs
+;
+; electronut.in
+; 
+
+; sk9822 driver
+.program sk9822
+.side_set 1                        
+
+.wrap_target
+    set y, 31           side 0  ; set a counter for shifting 32 bits, and set clk to 0 
+bitloop:               
+    out pins, 1         side 0  ; shift out bit from OSR, and set clk to 0
+    jmp y-- bitloop     side 1  ; jmp if y-- > 0, and set clk to 1
+.wrap
+
+% c-sdk {
+static inline void sk9822_program_init(PIO pio, uint sm, uint offset, 
+    uint pin_clk, uint pin_data) {
+
+    // get config 
+    pio_sm_config c = sk9822_program_get_default_config(offset);
+
+    // set OUT pins
+    sm_config_set_out_pins(&c, pin_data, 1);
+    // set SIDE pins
+    sm_config_set_sideset_pins(&c, pin_clk);
+    // set auto pull
+    sm_config_set_out_shift(&c, false, true, 32);
+    // set pin dirs 
+    pio_sm_set_consecutive_pindirs(pio, sm, pin_clk, 2, true);
+
+    // init gpio 
+    pio_gpio_init(pio, pin_clk);
+    pio_gpio_init(pio, pin_data);
+
+    // set clock div 
+    sm_config_set_clkdiv(&c, 6250);
+
+    // Load our configuration, and jump to the start of the program
+    pio_sm_init(pio, sm, offset, &c);
+
+    // Set the state machine running
+    pio_sm_set_enabled(pio, sm, true);
+}
+%}
